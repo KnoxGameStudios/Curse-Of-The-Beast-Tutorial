@@ -8,8 +8,8 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     #region Unity Method
     private void Start()
     {
-        string randomName = $"Tester{Guid.NewGuid().ToString()}";
-        ConnectToPhoton(randomName);
+        string nickname = PlayerPrefs.GetString("USERNAME");
+        ConnectToPhoton(nickname);
     }
     #endregion
     #region Private Methods
