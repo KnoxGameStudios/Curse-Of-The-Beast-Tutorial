@@ -5,6 +5,7 @@ using Photon.Realtime;
 
 public class PhotonConnector : MonoBehaviourPunCallbacks
 {
+    public static Action GetPhotonFriends = delegate { };
     #region Unity Method
     private void Start()
     {
@@ -44,7 +45,8 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     public override void OnJoinedLobby()
     {
         Debug.Log("You have connected to a Photon Lobby");
-        CreatePhotonRoom("TestRoom");
+        Debug.Log("Invoking get Playfab friends");
+        GetPhotonFriends?.Invoke();
     }
     public override void OnCreatedRoom()
     {
