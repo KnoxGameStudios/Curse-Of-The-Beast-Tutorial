@@ -2,23 +2,46 @@
 using TMPro;
 using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class UIFriend : MonoBehaviour
+namespace KnoxGameStudios
 {
-    [SerializeField] private TMP_Text friendNameText;
-    [SerializeField] private FriendInfo friend;
-
-    public static Action<string> OnRemoveFriend = delegate { };
-
-    public void Initialize(FriendInfo friend)
+    public class UIFriend : MonoBehaviour
     {
-        Debug.Log($"{friend.UserId} is online: {friend.IsOnline} ; in room: {friend.IsInRoom} ; room name: {friend.Room}");
-        this.friend = friend;
-        friendNameText.SetText(this.friend.UserId);
-    }
-    public void RemoveFriend()
-    {
-        Debug.Log($"Clicked to remove friend {friend.UserId}");
-        OnRemoveFriend?.Invoke(friend.UserId);
+        [SerializeField] private TMP_Text friendNameText;
+        [SerializeField] private FriendInfo friend;
+        [SerializeField] private Image onlineImage;
+        [SerializeField] private Color onlineColor;
+        [SerializeField] private Color offlineColor;
+
+        public static Action<string> OnRemoveFriend = delegate { };
+
+        public void Initialize(FriendInfo friend)
+        {
+            Debug.Log($"{friend.UserId} is online: {friend.IsOnline} ; in room: {friend.IsInRoom} ; room name: {friend.Room}");
+            this.friend = friend;
+
+            SetupUI();
+        }
+
+        private void SetupUI()
+        {
+            friendNameText.SetText(friend.UserId);
+
+            if (friend.IsOnline)
+            {
+                onlineImage.color = onlineColor;
+            }
+            else
+            {
+                onlineImage.color = offlineColor;
+            }
+        }
+
+        public void RemoveFriend()
+        {
+            Debug.Log($"Clicked to remove friend {friend.UserId}");
+            OnRemoveFriend?.Invoke(friend.UserId);
+        }
     }
 }

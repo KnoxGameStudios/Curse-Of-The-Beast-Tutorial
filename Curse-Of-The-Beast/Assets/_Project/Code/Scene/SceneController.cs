@@ -1,12 +1,13 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class SceneController : MonoBehaviour
+namespace KnoxGameStudios
 {
-
-    public static void LoadScene(string name)
+    public class SceneController : MonoBehaviour
     {
-        SceneManager.LoadScene(name);
+        public static void LoadScene(string name)
+        {
+            SceneManager.LoadScene(name);
+        }
     }
-
 }
