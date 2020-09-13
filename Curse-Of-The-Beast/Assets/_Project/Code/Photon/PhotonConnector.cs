@@ -7,16 +7,20 @@ namespace KnoxGameStudios
 {
     public class PhotonConnector : MonoBehaviourPunCallbacks
     {
+        [SerializeField] private string nickName;
         public static Action GetPhotonFriends = delegate { };
         #region Unity Method
+        private void Awake()
+        {
+            nickName = PlayerPrefs.GetString("USERNAME");
+        }
         private void Start()
         {
-            string nickname = PlayerPrefs.GetString("USERNAME");
-            ConnectToPhoton(nickname);
+            ConnectToPhoton();
         }
         #endregion
         #region Private Methods
-        private void ConnectToPhoton(string nickName)
+        private void ConnectToPhoton()
         {
             Debug.Log($"Connect to Photon as {nickName}");
             PhotonNetwork.AuthValues = new AuthenticationValues(nickName);
