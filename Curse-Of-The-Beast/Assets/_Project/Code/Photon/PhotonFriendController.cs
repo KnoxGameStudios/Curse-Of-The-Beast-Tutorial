@@ -37,6 +37,7 @@ namespace KnoxGameStudios
             else
             {
                 refreshCountdown = refreshCooldown;
+                if (PhotonNetwork.InRoom) return;
                 FindPhotonFriends(friendList);
             }
         }

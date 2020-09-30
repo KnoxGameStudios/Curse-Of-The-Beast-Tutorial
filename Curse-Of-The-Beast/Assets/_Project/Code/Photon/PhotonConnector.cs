@@ -13,6 +13,11 @@ namespace KnoxGameStudios
         private void Awake()
         {
             nickName = PlayerPrefs.GetString("USERNAME");
+            UIInvite.OnRoomInviteAccept += HandleRoomInviteAccept;
+        }
+        private void OnDestroy()
+        {
+            UIInvite.OnRoomInviteAccept -= HandleRoomInviteAccept;
         }
         private void Start()
         {
@@ -36,8 +41,34 @@ namespace KnoxGameStudios
             ro.MaxPlayers = 4;
             PhotonNetwork.JoinOrCreateRoom(roomName, ro, TypedLobby.Default);
         }
+        private void HandleRoomInviteAccept(string roomName)
+        {
+            PlayerPrefs.SetString("PHOTONROOM", roomName);
+            if(PhotonNetwork.InRoom)
+            {
+                PhotonNetwork.LeaveRoom();
+            }
+            else
+            {
+                if(PhotonNetwork.InLobby)
+                {
+                    JoinPlayerRoom();
+                }
+            }
+        }
+
+        private void JoinPlayerRoom()
+        {
+            string roomName = PlayerPrefs.GetString("PHOTONROOM");
+            PlayerPrefs.SetString("PHOTONROOM", "");
+            PhotonNetwork.JoinRoom(roomName);
+        }
         #endregion
         #region Public Methods
+        public void OnCreateRoomClicked(string roomName)
+        {
+            CreatePhotonRoom(roomName);
+        }
         #endregion
         #region Photon Callbacks
         public override void OnConnectedToMaster()
@@ -53,6 +84,11 @@ namespace KnoxGameStudios
             Debug.Log("You have connected to a Photon Lobby");
             Debug.Log("Invoking get Playfab friends");
             GetPhotonFriends?.Invoke();
+            string roomName = PlayerPrefs.GetString("PHOTONROOM");
+            if(!string.IsNullOrEmpty(roomName))
+            {
+                JoinPlayerRoom();
+            }
         }
         public override void OnCreatedRoom()
         {

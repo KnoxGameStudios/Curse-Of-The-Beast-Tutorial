@@ -1,20 +1,29 @@
 ﻿using UnityEngine;
+using System;
 using Photon.Chat;
 using Photon.Pun;
-using System;
 using ExitGames.Client.Photon;
+using KnoxGameStudios;
 
 public class PhotonChatController : MonoBehaviour, IChatClientListener
 {
     [SerializeField] private string nickName;
     private ChatClient chatClient;
 
+    public static Action<string, string> OnRoomInvite = delegate { };
+
     #region Unity Methods
 
     private void Awake()
     {
         nickName = PlayerPrefs.GetString("USERNAME");
+        UIFriend.OnInviteFriend += HandleFriendInvite;
     }
+    private void OnDestroy()
+    {
+        UIFriend.OnInviteFriend -= HandleFriendInvite;
+    }
+
     private void Start()
     {
         chatClient = new ChatClient(this);
@@ -42,9 +51,9 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
 
     #region  Public Methods
 
-    public void SendDirectMessage(string recipient, string message)
+    public void HandleFriendInvite(string recipient)
     {
-        chatClient.SendPrivateMessage(recipient, message);
+        chatClient.SendPrivateMessage(recipient, PhotonNetwork.CurrentRoom.Name);
     }
 
     #endregion
@@ -64,7 +73,6 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
     public void OnConnected()
     {
         Debug.Log("You have connected to the Photon Chat");
-        SendDirectMessage("Brilath", "Hi Brilath");
     }
 
     public void OnChatStateChange(ChatState state)
@@ -92,6 +100,7 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
             if (!sender.Equals(senderName, StringComparison.OrdinalIgnoreCase))
             {
                 Debug.Log($"{sender}: {message}");
+                OnRoomInvite?.Invoke(sender, message.ToString());
             }
         }
     }

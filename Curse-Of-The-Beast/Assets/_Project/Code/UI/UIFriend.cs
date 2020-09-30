@@ -15,6 +15,7 @@ namespace KnoxGameStudios
         [SerializeField] private Color offlineColor;
 
         public static Action<string> OnRemoveFriend = delegate { };
+        public static Action<string> OnInviteFriend = delegate { };
 
         public void Initialize(FriendInfo friend)
         {
@@ -42,6 +43,12 @@ namespace KnoxGameStudios
         {
             Debug.Log($"Clicked to remove friend {friend.UserId}");
             OnRemoveFriend?.Invoke(friend.UserId);
+        }
+
+        public void InviteFriend()
+        {
+            Debug.Log($"Clicked to invite friend {friend.UserId}");
+            OnInviteFriend?.Invoke(friend.UserId);
         }
     }
 }
