@@ -109,15 +109,15 @@ namespace KnoxGameStudios
         }
         public override void OnPlayerEnteredRoom(Player newPlayer)
         {
-            Debug.Log($"Another player has joined the room {newPlayer.UserId}");
+            Debug.Log($"Another player has joined the room {newPlayer.NickName}");
         }
         public override void OnPlayerLeftRoom(Player otherPlayer)
         {
-            Debug.Log($"Player has left the room {otherPlayer.UserId}");
+            Debug.Log($"Player has left the room {otherPlayer.NickName}");
         }
         public override void OnMasterClientSwitched(Player newMasterClient)
         {
-            Debug.Log($"New Master Client is {newMasterClient.UserId}");
+            Debug.Log($"New Master Client is {newMasterClient.NickName}");
         }
         #endregion
     }

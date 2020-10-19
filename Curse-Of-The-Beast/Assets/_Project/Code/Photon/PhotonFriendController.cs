@@ -20,12 +20,12 @@ namespace KnoxGameStudios
         private void Awake()
         {
             friendList = new List<PlayfabFriendInfo>();
-            PlayfabFriendController.OnFriendListUpdated += HandleFriendsUpdated;
+            //PlayfabFriendController.OnFriendListUpdated += HandleFriendsUpdated;
         }
 
         private void OnDestroy()
         {
-            PlayfabFriendController.OnFriendListUpdated -= HandleFriendsUpdated;
+            //PlayfabFriendController.OnFriendListUpdated -= HandleFriendsUpdated;
         }
 
         private void Update()
