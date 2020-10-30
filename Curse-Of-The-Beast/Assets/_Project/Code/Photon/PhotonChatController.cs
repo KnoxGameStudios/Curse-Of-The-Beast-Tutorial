@@ -136,7 +136,7 @@ namespace KnoxGameStudios
         {
             Debug.Log($"Photon Chat OnStatusUpdate: {user} changed to {status}: {message}");
             PhotonStatus newStatus = new PhotonStatus(user, status, (string)message);
-            Debug.Log($"Status Update for {user} and its now {status}..............................");
+            Debug.Log($"Status Update for {user} and its now {status}.");
             OnStatusUpdated?.Invoke(newStatus);
         }
 

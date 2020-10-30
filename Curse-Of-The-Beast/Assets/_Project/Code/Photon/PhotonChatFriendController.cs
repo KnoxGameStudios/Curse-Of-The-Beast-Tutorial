@@ -11,7 +11,6 @@ namespace KnoxGameStudios
     {        
         [SerializeField] private bool initialized;
         [SerializeField] private List<string> friendList;
-        [SerializeField] private List<string> friendStatusesTest;
         private ChatClient chatClient;
         public static Dictionary<string, PhotonStatus> friendStatuses;
         
@@ -21,8 +20,8 @@ namespace KnoxGameStudios
         private void Awake()
         {
             friendList = new List<string>();
-            friendStatusesTest = new List<string>();
             friendStatuses = new Dictionary<string, PhotonStatus>();
+
             PlayfabFriendController.OnFriendListUpdated += HandleFriendsUpdated;
             PhotonChatController.OnChatConnected += HandleChatConnected;
             PhotonChatController.OnStatusUpdated += HandleStatusUpdated;
@@ -61,11 +60,6 @@ namespace KnoxGameStudios
             {
                 friendStatuses.Add(status.PlayerName, status);
             }
-            friendStatusesTest.Add($"{status.PlayerName}:{status.Status}");
-            foreach (KeyValuePair<string, PhotonStatus> currentStatus in friendStatuses)
-            {
-                Debug.Log($"asdfasfdasfdasd...asdf.as.fd{currentStatus.Value.PlayerName} changed to {currentStatus.Value.Status} with message {currentStatus.Value.Message}");
-            }
         }
 
         private void HandleGetCurrentStatus(string name)
@@ -90,6 +84,7 @@ namespace KnoxGameStudios
                 chatClient.RemoveFriends(friendDisplayNames);
             }
         }
+
         private void FindPhotonFriends()
         {
             if (chatClient == null) return;
