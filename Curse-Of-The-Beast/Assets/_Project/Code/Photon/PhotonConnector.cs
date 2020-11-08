@@ -9,15 +9,12 @@ namespace KnoxGameStudios
     {
         [SerializeField] private string nickName;
         public static Action GetPhotonFriends = delegate { };
+        public static Action OnLobbyJoined = delegate { };
+
         #region Unity Method
         private void Awake()
         {
-            nickName = PlayerPrefs.GetString("USERNAME");
-            UIInvite.OnRoomInviteAccept += HandleRoomInviteAccept;
-        }
-        private void OnDestroy()
-        {
-            UIInvite.OnRoomInviteAccept -= HandleRoomInviteAccept;
+            nickName = PlayerPrefs.GetString("USERNAME");            
         }
         private void Start()
         {
@@ -32,43 +29,7 @@ namespace KnoxGameStudios
             PhotonNetwork.AutomaticallySyncScene = true;
             PhotonNetwork.NickName = nickName;
             PhotonNetwork.ConnectUsingSettings();
-        }
-        private void CreatePhotonRoom(string roomName)
-        {
-            RoomOptions ro = new RoomOptions();
-            ro.IsOpen = true;
-            ro.IsVisible = true;
-            ro.MaxPlayers = 4;
-            PhotonNetwork.JoinOrCreateRoom(roomName, ro, TypedLobby.Default);
-        }
-        private void HandleRoomInviteAccept(string roomName)
-        {
-            PlayerPrefs.SetString("PHOTONROOM", roomName);
-            if(PhotonNetwork.InRoom)
-            {
-                PhotonNetwork.LeaveRoom();
-            }
-            else
-            {
-                if(PhotonNetwork.InLobby)
-                {
-                    JoinPlayerRoom();
-                }
-            }
-        }
-
-        private void JoinPlayerRoom()
-        {
-            string roomName = PlayerPrefs.GetString("PHOTONROOM");
-            PlayerPrefs.SetString("PHOTONROOM", "");
-            PhotonNetwork.JoinRoom(roomName);
-        }
-        #endregion
-        #region Public Methods
-        public void OnCreateRoomClicked(string roomName)
-        {
-            CreatePhotonRoom(roomName);
-        }
+        }        
         #endregion
         #region Photon Callbacks
         public override void OnConnectedToMaster()
@@ -84,40 +45,7 @@ namespace KnoxGameStudios
             Debug.Log("You have connected to a Photon Lobby");
             Debug.Log("Invoking get Playfab friends");
             GetPhotonFriends?.Invoke();
-            string roomName = PlayerPrefs.GetString("PHOTONROOM");
-            if(!string.IsNullOrEmpty(roomName))
-            {
-                JoinPlayerRoom();
-            }
-        }
-        public override void OnCreatedRoom()
-        {
-            Debug.Log($"You have created a Photon Room named {PhotonNetwork.CurrentRoom.Name}");
-
-        }
-        public override void OnJoinedRoom()
-        {
-            Debug.Log($"You have joined the Photon room {PhotonNetwork.CurrentRoom.Name}");
-        }
-        public override void OnLeftRoom()
-        {
-            Debug.Log("You have left a Photon Room");
-        }
-        public override void OnJoinRoomFailed(short returnCode, string message)
-        {
-            Debug.Log($"You failed to join a Photon room: {message}");
-        }
-        public override void OnPlayerEnteredRoom(Player newPlayer)
-        {
-            Debug.Log($"Another player has joined the room {newPlayer.NickName}");
-        }
-        public override void OnPlayerLeftRoom(Player otherPlayer)
-        {
-            Debug.Log($"Player has left the room {otherPlayer.NickName}");
-        }
-        public override void OnMasterClientSwitched(Player newMasterClient)
-        {
-            Debug.Log($"New Master Client is {newMasterClient.NickName}");
+            OnLobbyJoined?.Invoke();
         }
         #endregion
     }

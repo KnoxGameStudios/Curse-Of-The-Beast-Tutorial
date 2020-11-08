@@ -697,7 +697,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   friendNameText: {fileID: 5813026548768768491}
+  friendName: 
   onlineImage: {fileID: 7315740898694068690}
+  inviteButton: {fileID: 5813026548356692811}
   onlineColor: {r: 0, g: 0.9245283, b: 0.29891092, a: 1}
   offlineColor: {r: 0.8207547, g: 0.8207547, b: 0.8207547, a: 1}
 --- !u!1 &5813026548768768489

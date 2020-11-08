@@ -47,7 +47,7 @@ namespace KnoxGameStudios
         private void ConnectoToPhotonChat()
         {
             Debug.Log("Connecting to Photon Chat");
-            chatClient.AuthValues = new Photon.Chat.AuthenticationValues(nickName);
+            chatClient.AuthValues = new AuthenticationValues(nickName);
             ChatAppSettings chatSettings = PhotonNetwork.PhotonServerSettings.AppSettings.GetChatSettings();
             chatClient.ConnectUsingSettings(chatSettings);
         }
