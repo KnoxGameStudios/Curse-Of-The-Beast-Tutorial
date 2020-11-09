@@ -19,6 +19,7 @@ namespace KnoxGameStudios
         public static Action<Player> OnRemovePlayer = delegate { };
         public static Action OnClearTeams = delegate { };
 
+        #region Unity Methods
         private void Awake()
         {
             UITeam.OnSwitchToTeam += HandleSwitchTeam;
@@ -36,7 +37,9 @@ namespace KnoxGameStudios
             PhotonRoomController.OnRoomLeft -= HandleLeaveRoom;
             PhotonRoomController.OnOtherPlayerLeftRoom -= HandleOtherPlayerLeftRoom;
         }
+        #endregion
 
+        #region Handle Methods
         private void HandleSwitchTeam(PhotonTeam newTeam)
         {            
             if (PhotonNetwork.LocalPlayer.GetPhotonTeam() == null)
@@ -53,6 +56,30 @@ namespace KnoxGameStudios
 
         private void HandleCreateTeams(GameMode gameMode)
         {
+            CreateTeams(gameMode);
+
+            OnCreateTeams?.Invoke(_roomTeams, gameMode);
+
+            AutoAssignPlayerToTeam(PhotonNetwork.LocalPlayer, gameMode);
+        }
+
+        private void HandleLeaveRoom()
+        {
+            PhotonNetwork.LocalPlayer.LeaveCurrentTeam();
+            _roomTeams.Clear();
+            _teamSize = 0;
+            OnClearTeams?.Invoke();
+        }
+
+        private void HandleOtherPlayerLeftRoom(Player otherPlayer)
+        {
+            OnRemovePlayer?.Invoke(otherPlayer);
+        }
+        #endregion
+
+        #region Private Methods
+        private void CreateTeams(GameMode gameMode)
+        {
             _teamSize = gameMode.TeamSize;
             int numberOfTeams = gameMode.MaxPlayers;
             if (gameMode.HasTeams)
@@ -68,42 +95,7 @@ namespace KnoxGameStudios
                     Code = (byte)i
                 });
             }
-
-            OnCreateTeams?.Invoke(_roomTeams, gameMode);
-            
-            foreach(PhotonTeam team in _roomTeams)
-            {
-                int teamPlayerCount = PhotonTeamsManager.Instance.GetTeamMembersCount(team.Code);
-
-                if(teamPlayerCount < gameMode.TeamSize)
-                {
-                    Debug.Log($"Auto assigned to {team.Name}");
-                    if(PhotonNetwork.LocalPlayer.GetPhotonTeam() == null)
-                    {
-                        PhotonNetwork.LocalPlayer.JoinTeam(team.Code);
-                    }
-                    else if(PhotonNetwork.LocalPlayer.GetPhotonTeam().Code != team.Code)
-                    {
-                        PhotonNetwork.LocalPlayer.SwitchTeam(team.Code);
-                    }
-                    break;
-                }
-            }
         }
-
-        private void HandleLeaveRoom()
-        {
-            PhotonNetwork.LocalPlayer.LeaveCurrentTeam();
-            _roomTeams.Clear();
-            _teamSize = 0;
-            OnClearTeams?.Invoke();
-        }
-
-        private void HandleOtherPlayerLeftRoom(Player otherPlayer)
-        {
-            OnRemovePlayer?.Invoke(otherPlayer);
-        }
-
 
         private bool CanSwitchToTeam(PhotonTeam newTeam)
         {
@@ -132,6 +124,30 @@ namespace KnoxGameStudios
             return canSwitch;
         }
 
+        private void AutoAssignPlayerToTeam(Player player, GameMode gameMode)
+        {
+            foreach (PhotonTeam team in _roomTeams)
+            {
+                int teamPlayerCount = PhotonTeamsManager.Instance.GetTeamMembersCount(team.Code);
+
+                if (teamPlayerCount < gameMode.TeamSize)
+                {
+                    Debug.Log($"Auto assigned {player.NickName} to {team.Name}");
+                    if (player.GetPhotonTeam() == null)
+                    {
+                        player.JoinTeam(team.Code);
+                    }
+                    else if (player.GetPhotonTeam().Code != team.Code)
+                    {
+                        player.SwitchTeam(team.Code);
+                    }
+                    break;
+                }
+            }
+        }
+        #endregion
+
+        #region Photon Callback Methods
         public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
         {
             object teamCodeObject;
@@ -140,7 +156,6 @@ namespace KnoxGameStudios
                 if (teamCodeObject == null) return;
 
                 byte teamCode = (byte)teamCodeObject;
-                Debug.Log($"{targetPlayer.NickName} changed to team code {teamCode}");
                 
                 PhotonTeam newTeam;
                 if(PhotonTeamsManager.Instance.TryGetTeamByCode(teamCode, out newTeam))
@@ -150,5 +165,6 @@ namespace KnoxGameStudios
                 }
             }
         }
+        #endregion
     }
 }

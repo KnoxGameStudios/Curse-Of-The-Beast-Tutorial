@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using TMPro;
 using Photon.Realtime;
-using System.Collections.Generic;
 
 namespace KnoxGameStudios
 {

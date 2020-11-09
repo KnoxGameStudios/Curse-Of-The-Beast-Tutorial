@@ -97,7 +97,7 @@ namespace KnoxGameStudios
         public void SwitchToTeam()
         {
             Debug.Log($"Trying to switch to team {_team.Name}");
-            if (_teamSize == _maxTeamSize) return;
+            if (_teamSize >= _maxTeamSize) return;
 
             Debug.Log($"Switching to team {_team.Name}");
             OnSwitchToTeam?.Invoke(_team);
