@@ -11,12 +11,20 @@ namespace KnoxGameStudios
     {
         [SerializeField] private GameMode _selectedGameMode;
         [SerializeField] private GameMode[] _availableGameModes;
-        private const string GAME_MODE = "GAMEMODE";        
+        [SerializeField] private bool _startGame;
+        [SerializeField] private float _currentCountDown;
+        [SerializeField] private int _gameSceneIndex;
 
-        public static Action<GameMode> OnJoinRoom = delegate { };        
+        private const string GAME_MODE = "GAMEMODE";
+        private const string START_GAME = "STARTGAME";
+        private const float GAME_COUNT_DOWN = 10f;
+
+        public static Action<GameMode> OnJoinRoom = delegate { };
         public static Action<bool> OnRoomStatusChange = delegate { };
         public static Action OnRoomLeft = delegate { };
         public static Action<Player> OnOtherPlayerLeftRoom = delegate { };
+        public static Action<Player> OnMasterOfRoom = delegate { };
+        public static Action<float> OnCountingDown = delegate { };
 
         private void Awake()
         {
@@ -24,7 +32,11 @@ namespace KnoxGameStudios
             UIInvite.OnRoomInviteAccept += HandleRoomInviteAccept;
             PhotonConnector.OnLobbyJoined += HandleLobbyJoined;
             UIDisplayRoom.OnLeaveRoom += HandleLeaveRoom;
-            UIFriend.OnGetRoomStatus += HandleGetRoomStatus;                        
+            UIDisplayRoom.OnStartGame += HandleStartGame;
+            UIFriend.OnGetRoomStatus += HandleGetRoomStatus;
+            UIPlayerSelection.OnKickPlayer += HandleKickPlayer;
+
+            PhotonNetwork.AutomaticallySyncScene = true;
         }
 
         private void OnDestroy()
@@ -33,7 +45,27 @@ namespace KnoxGameStudios
             UIInvite.OnRoomInviteAccept -= HandleRoomInviteAccept;
             PhotonConnector.OnLobbyJoined -= HandleLobbyJoined;
             UIDisplayRoom.OnLeaveRoom -= HandleLeaveRoom;
-            UIFriend.OnGetRoomStatus -= HandleGetRoomStatus;            
+            UIDisplayRoom.OnStartGame -= HandleStartGame;
+            UIFriend.OnGetRoomStatus -= HandleGetRoomStatus;
+            UIPlayerSelection.OnKickPlayer -= HandleKickPlayer;
+        }
+
+        private void Update()
+        {
+            if (!_startGame) return;
+            
+            if (_currentCountDown > 0)
+            {
+                OnCountingDown?.Invoke(_currentCountDown);
+                _currentCountDown -= Time.deltaTime;
+            }
+            else
+            {
+                _startGame = false;
+                
+                Debug.Log("Loading level!");
+                PhotonNetwork.LoadLevel(_gameSceneIndex);
+            }            
         }
 
         #region Handle Methods
@@ -88,6 +120,21 @@ namespace KnoxGameStudios
         {
             OnRoomStatusChange?.Invoke(PhotonNetwork.InRoom);
         }
+
+        private void HandleStartGame()
+        {
+            Hashtable startRoomProperty = new Hashtable()
+            { {START_GAME, true} };
+            PhotonNetwork.CurrentRoom.SetCustomProperties(startRoomProperty);
+        }
+
+        private void HandleKickPlayer(Player kickedPlayer)
+        {
+            if(PhotonNetwork.LocalPlayer.Equals(kickedPlayer))
+            {
+                HandleLeaveRoom();
+            }
+        }
         #endregion
 
         #region Private Methods
@@ -98,6 +145,7 @@ namespace KnoxGameStudios
 
             PhotonNetwork.JoinRandomRoom(expectedCustomRoomProperties, 0);
         }
+
         private void CreatePhotonRoom()
         {
             string roomName = Guid.NewGuid().ToString();
@@ -105,6 +153,7 @@ namespace KnoxGameStudios
 
             PhotonNetwork.JoinOrCreateRoom(roomName, ro, TypedLobby.Default);
         }
+
         private RoomOptions GetRoomOptions()
         {
             RoomOptions ro = new RoomOptions();
@@ -122,6 +171,7 @@ namespace KnoxGameStudios
 
             return ro;
         }
+
         private void DebugPlayerList()
         {
             string players = "";
@@ -131,6 +181,7 @@ namespace KnoxGameStudios
             }
             Debug.Log($"Current Room Players: {players}");
         }
+
         private GameMode GetRoomGameMode()
         {
             string gameModeName = (string)PhotonNetwork.CurrentRoom.CustomProperties[GAME_MODE];
@@ -145,13 +196,21 @@ namespace KnoxGameStudios
             }
             return gameMode;
         }
+
+        private void AutoStartGame()
+        {
+            if (PhotonNetwork.CurrentRoom.PlayerCount >= _selectedGameMode.MaxPlayers)
+                HandleStartGame();
+        }
         #endregion
 
         #region Photon Callbacks
         public override void OnCreatedRoom()
         {
-            Debug.Log($"You have created a Photon Room named {PhotonNetwork.CurrentRoom.Name}");            
+            Debug.Log($"You have created a Photon Room named {PhotonNetwork.CurrentRoom.Name}");
+            OnMasterOfRoom?.Invoke(PhotonNetwork.LocalPlayer);
         }
+
         public override void OnJoinedRoom()
         {
             Debug.Log($"You have joined the Photon room {PhotonNetwork.CurrentRoom.Name}");
@@ -161,39 +220,62 @@ namespace KnoxGameStudios
             OnJoinRoom?.Invoke(_selectedGameMode);
             OnRoomStatusChange?.Invoke(PhotonNetwork.InRoom);
         }
+
         public override void OnLeftRoom()
         {
             Debug.Log("You have left a Photon Room");
             _selectedGameMode = null;
+            _startGame = false;
             OnRoomStatusChange?.Invoke(PhotonNetwork.InRoom);            
         }
+
         public override void OnJoinRandomFailed(short returnCode, string message)
         {
             Debug.Log($"OnJoinRandomFailed {message}");
             CreatePhotonRoom();
         }
+
         public override void OnJoinRoomFailed(short returnCode, string message)
         {
             Debug.Log($"You failed to join a Photon room: {message}");
         }
+
         public override void OnPlayerEnteredRoom(Player newPlayer)
         {
             Debug.Log($"Another player has joined the room {newPlayer.NickName}");
             DebugPlayerList();
+            AutoStartGame();
         }
+
         public override void OnPlayerLeftRoom(Player otherPlayer)
         {
             Debug.Log($"Player has left the room {otherPlayer.NickName}");
             OnOtherPlayerLeftRoom?.Invoke(otherPlayer);
             DebugPlayerList();
         }
+
         public override void OnMasterClientSwitched(Player newMasterClient)
         {
             Debug.Log($"New Master Client is {newMasterClient.NickName}");
+            OnMasterOfRoom?.Invoke(newMasterClient);
         }
-        public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
+
+        public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
         {
-            Debug.Log($"{targetPlayer.NickName} has changed something");            
+            object startGameObject;
+            if (propertiesThatChanged.TryGetValue(START_GAME, out startGameObject))
+            {
+                _startGame = (bool)startGameObject;
+                if (_startGame)
+                {
+                    _currentCountDown = GAME_COUNT_DOWN;
+                }
+                if (_startGame && PhotonNetwork.IsMasterClient)
+                {
+                    PhotonNetwork.CurrentRoom.IsVisible = false;
+                    PhotonNetwork.CurrentRoom.IsOpen = false;
+                }
+            }            
         }
         #endregion
     }

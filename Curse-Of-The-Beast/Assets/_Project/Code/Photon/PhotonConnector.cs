@@ -18,6 +18,8 @@ namespace KnoxGameStudios
         }
         private void Start()
         {
+            if (PhotonNetwork.IsConnectedAndReady || PhotonNetwork.IsConnected) return;
+
             ConnectToPhoton();
         }
         #endregion
